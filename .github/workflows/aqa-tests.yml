@@ -1,0 +1,81 @@
+name: AQA End-to-End Tests (Direction 1 - Levels 1, 2, 3)
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Test level filter (all, 1, 2, or 3)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - '1'
+          - '2'
+          - '3'
+
+jobs:
+  aqa-e2e:
+    name: Run AQA Screenplay + Playwright Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore & Build AQA Framework
+        working-directory: aqa/restaurant-aqa-framework
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+
+      - name: Install Playwright Browsers
+        working-directory: aqa/restaurant-aqa-framework
+        run: pwsh bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Run End-to-End Tests (Levels 1, 2, 3)
+        working-directory: aqa/restaurant-aqa-framework
+        continue-on-error: true
+        env:
+          FRONTEND_BASE_URL: ${{ vars.FRONTEND_BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          OWNER_PASSWORD: ${{ secrets.OWNER_PASSWORD }}
+          OTHER_CUSTOMER_EMAIL: ${{ secrets.OTHER_CUSTOMER_EMAIL }}
+          OTHER_CUSTOMER_PASSWORD: ${{ secrets.OTHER_CUSTOMER_PASSWORD }}
+          WAITER_EMAIL: ${{ secrets.WAITER_EMAIL }}
+          WAITER_PASSWORD: ${{ secrets.WAITER_PASSWORD }}
+          HEADLESS: 'true'
+          BROWSER: 'chromium'
+          ARTIFACTS_DIR: 'TestResults/Artifacts'
+        run: |
+          if [ "${{ github.event.inputs.test_level }}" != "" ] && [ "${{ github.event.inputs.test_level }}" != "all" ]; then
+            dotnet test --configuration Release --no-build \
+              --filter "Level=${{ github.event.inputs.test_level }}" \
+              --logger "trx;LogFileName=aqa-results.trx" \
+              --logger "html;LogFileName=aqa-report.html" \
+              --results-directory TestResults
+          else
+            dotnet test --configuration Release --no-build \
+              --logger "trx;LogFileName=aqa-results.trx" \
+              --logger "html;LogFileName=aqa-report.html" \
+              --results-directory TestResults
+          fi
+
+      - name: Upload Test Reports & Failure Artifacts (Screenshots, Videos, Traces)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aqa-test-results-and-artifacts
+          path: aqa/restaurant-aqa-framework/TestResults/
+          retention-days: 14
+
