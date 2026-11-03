@@ -1,0 +1,43 @@
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+*.code-workspace
+
+# OS
+.DS_Store
+._*
+Thumbs.db
+
+# Node / Angular
+node_modules/
+**/node_modules/
+**/dist/
+**/.angular/
+
+# Python virtual environments
+**/syndicate_venv/
+**/.venv/
+**/venv/
+**/__pycache__/
+
+# Local env
+.env
+**/.env
+.env.local
+
+# .NET & Test Artifacts
+**/bin/
+**/obj/
+**/TestResults/
+**/bundles/
+**/logs/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
