@@ -21,7 +21,7 @@ on:
 jobs:
   aqa-e2e:
     name: Run AQA Screenplay + Playwright Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -47,7 +47,7 @@ jobs:
         continue-on-error: true
         env:
           FRONTEND_BASE_URL: ${{ vars.FRONTEND_BASE_URL }}
-          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://k93iy23zq1.execute-api.eu-north-1.amazonaws.com/develop' }}
           OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
           OWNER_PASSWORD: ${{ secrets.OWNER_PASSWORD }}
           OTHER_CUSTOMER_EMAIL: ${{ secrets.OTHER_CUSTOMER_EMAIL }}
@@ -78,4 +78,3 @@ jobs:
           name: aqa-test-results-and-artifacts
           path: aqa/restaurant-aqa-framework/TestResults/
           retention-days: 14
-
